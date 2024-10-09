@@ -1284,6 +1284,22 @@ config SCHED_INSTRUMENTATION_IRQHANDLER
 
 			void sched_note_irqhandler(int irq, FAR void *handler, bool enter);
 
+config SCHED_INSTRUMENTATION_HEAP
+	bool "Heap monitor hooks"
+	default n
+	---help---
+		Enables additional hooks for heap allocation.
+
+			void sched_note_heap(uint8_t event, FAR void* heap, FAR void *mem, size_t size, size_t curused);
+
+config SCHED_INSTRUMENTATION_WDOG
+	bool "Watchdog timer monitor hooks"
+	default n
+	---help---
+		Enables additional hooks for watchdog timer.
+
+			void sched_note_wdog(uint8_t event, FAR void *handler, FAR const void *arg);
+
 config SCHED_INSTRUMENTATION_DUMP
 	bool "Use note dump for instrumentation"
 	default n
@@ -1988,3 +2004,11 @@ config SCHED_EVENTS
 		This option enables event objects. Threads may wait on event
 		objects for specific events, but both threads and ISRs may deliver
 		events to event objects.
+
+config ASSERT_PAUSE_CPU_TIMEOUT
+	int "Timeout in milisecond to pause another CPU when assert"
+	default 2000
+	depends on SMP
+	---help---
+		Timeout in milisecond to pause another CPU when assert. Only available
+		when SMP is enabled.

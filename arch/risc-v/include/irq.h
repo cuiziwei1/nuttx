@@ -567,12 +567,6 @@
 
 struct xcptcontext
 {
-  /* The following function pointer is non-NULL if there are pending signals
-   * to be processed.
-   */
-
-  void *sigdeliver; /* Actual type is sig_deliver_t */
-
   /* These additional register save locations are used to implement the
    * signal delivery trampoline.
    *
@@ -612,6 +606,9 @@ struct xcptcontext
   /* Integer register save area */
 
   uintreg_t *regs;
+#ifndef CONFIG_BUILD_FLAT
+  uintreg_t *initregs;
+#endif
 
 #ifdef CONFIG_LIB_SYSCALL
   /* User integer registers upon system call entry */
@@ -807,6 +804,13 @@ noinstrument_function static inline bool up_interrupt_context(void)
 
   return ret;
 }
+
+/****************************************************************************
+ * Name: up_getusrpc
+ ****************************************************************************/
+
+#define up_getusrpc(regs) \
+    (((uintptr_t *)((regs) ? (regs) : up_current_regs()))[REG_EPC])
 
 #undef EXTERN
 #if defined(__cplusplus)

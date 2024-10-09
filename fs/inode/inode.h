@@ -35,6 +35,7 @@
 #include <sched.h>
 
 #include <nuttx/kmalloc.h>
+#include <nuttx/sched.h>
 #include <nuttx/fs/fs.h>
 #include <nuttx/lib/lib.h>
 
@@ -132,7 +133,7 @@ struct inode_search_s
  * file system.
  */
 
-typedef int (*foreach_inode_t)(FAR struct inode *node,
+typedef int (*foreach_inode_t)(FAR struct inode *inode,
                                FAR char dirpath[PATH_MAX],
                                FAR void *arg);
 
@@ -170,21 +171,41 @@ void inode_initialize(void);
  * Name: inode_lock
  *
  * Description:
- *   Get exclusive access to the in-memory inode tree (tree_sem).
+ *   Get writeable exclusive access to the in-memory inode tree.
  *
  ****************************************************************************/
 
-int inode_lock(void);
+void inode_lock(void);
+
+/****************************************************************************
+ * Name: inode_rlock
+ *
+ * Description:
+ *   Get readable exclusive access to the in-memory inode tree.
+ *
+ ****************************************************************************/
+
+void inode_rlock(void);
 
 /****************************************************************************
  * Name: inode_unlock
  *
  * Description:
- *   Relinquish exclusive access to the in-memory inode tree (tree_sem).
+ *   Relinquish writeable exclusive access to the in-memory inode tree.
  *
  ****************************************************************************/
 
 void inode_unlock(void);
+
+/****************************************************************************
+ * Name: inode_runlock
+ *
+ * Description:
+ *   Relinquish read exclusive access to the in-memory inode tree.
+ *
+ ****************************************************************************/
+
+void inode_runlock(void);
 
 /****************************************************************************
  * Name: inode_search
@@ -288,7 +309,7 @@ int inode_chstat(FAR struct inode *inode,
  *
  ****************************************************************************/
 
-int inode_getpath(FAR struct inode *node, FAR char *path, size_t len);
+int inode_getpath(FAR struct inode *inode, FAR char *path, size_t len);
 
 /****************************************************************************
  * Name: inode_free
@@ -298,7 +319,7 @@ int inode_getpath(FAR struct inode *node, FAR char *path, size_t len);
  *
  ****************************************************************************/
 
-void inode_free(FAR struct inode *node);
+void inode_free(FAR struct inode *inode);
 
 /****************************************************************************
  * Name: inode_nextname
@@ -372,7 +393,7 @@ int inode_remove(FAR const char *path);
  *
  ****************************************************************************/
 
-int inode_addref(FAR struct inode *inode);
+void inode_addref(FAR struct inode *inode);
 
 /****************************************************************************
  * Name: inode_release

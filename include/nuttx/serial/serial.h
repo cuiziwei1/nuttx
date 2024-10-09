@@ -1,6 +1,8 @@
 /****************************************************************************
  * include/nuttx/serial/serial.h
  *
+ * SPDX-License-Identifier: Apache-2.0
+ *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.  The
@@ -87,6 +89,8 @@
 #define uart_txempty(dev)        dev->ops->txempty(dev)
 #define uart_send(dev,ch)        dev->ops->send(dev,ch)
 #define uart_receive(dev,s)      dev->ops->receive(dev,s)
+#define uart_recvbuf(dev,b,l)    dev->ops->recvbuf(dev,b,l)
+#define uart_sendbuf(dev,b,l)    dev->ops->sendbuf(dev,b,l)
 
 #define uart_release(dev)      \
   ((dev)->ops->release ? (dev)->ops->release(dev) : -ENOSYS)
@@ -263,6 +267,20 @@ struct uart_ops_s
    */
 
   CODE int (*release)(FAR struct uart_dev_s *dev);
+
+  /* Receive multiple bytes.
+   * Returns the actual number of characters received.
+   */
+
+  CODE ssize_t (*recvbuf)(FAR struct uart_dev_s *dev,
+                          FAR void *buf, size_t len);
+
+  /* This method will send multiple bytes.
+   * Returns the actual number of characters sent.
+   */
+
+  CODE ssize_t (*sendbuf)(FAR struct uart_dev_s *dev,
+                          FAR const void *buf, size_t len);
 };
 
 /* This is the device structure used by the driver.  The caller of
@@ -543,7 +561,7 @@ int uart_check_special(FAR uart_dev_t *dev, FAR const char *buf,
  ****************************************************************************/
 
 #ifdef CONFIG_SERIAL_GDBSTUB
-int uart_gdbstub_register(FAR uart_dev_t *dev);
+int uart_gdbstub_register(FAR uart_dev_t *dev, FAR const char *path);
 #endif
 
 #undef EXTERN

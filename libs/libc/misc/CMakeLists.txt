@@ -1,6 +1,8 @@
 # ##############################################################################
 # libs/libc/misc/CMakeLists.txt
 #
+# SPDX-License-Identifier: Apache-2.0
+#
 # Licensed to the Apache Software Foundation (ASF) under one or more contributor
 # license agreements.  See the NOTICE file distributed with this work for
 # additional information regarding copyright ownership.  The ASF licenses this
@@ -25,6 +27,7 @@ list(
   APPEND
   SRCS
   lib_bitmap.c
+  lib_circbuf.c
   lib_mknod.c
   lib_umask.c
   lib_utsname.c

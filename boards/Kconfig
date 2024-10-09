@@ -2135,6 +2135,14 @@ config ARCH_BOARD_MPS2_AN500
 		This options selects support for NuttX on the MPS2 AN500
 		board featuring the Cortex-M7.
 
+config ARCH_BOARD_MPS2_AN521
+	bool "Arm MPS2 AN521"
+	depends on ARCH_CHIP_MPS2_AN521
+	select ARCH_HAVE_IRQBUTTONS
+	---help---
+		This options selects support for NuttX on the MPS2 AN521
+		board featuring the Cortex-M33.
+
 config ARCH_BOARD_MPS3_AN547
 	bool "Arm MPS3 AN547"
 	depends on ARCH_CHIP_MPS3_AN547
@@ -3431,6 +3439,7 @@ config ARCH_BOARD
 	default "s32k344evb"                if ARCH_BOARD_S32K344EVB
 	default "mr-canhubk3"               if ARCH_BOARD_MR_CANHUBK3
 	default "mps2-an500"                if ARCH_BOARD_MPS2_AN500
+	default "mps2-an521"                if ARCH_BOARD_MPS2_AN521
 	default "mps3-an547"                if ARCH_BOARD_MPS3_AN547
 	default "rv32m1-vega"               if ARCH_BOARD_RV32M1_VEGA
 	default "rv-virt"                   if ARCH_BOARD_QEMU_RV_VIRT
@@ -3650,6 +3659,9 @@ source "boards/tricore/tc3xx/tc397/Kconfig"
 endif
 if ARCH_BOARD_MPS2_AN500
 source "boards/arm/mps/mps2-an500/Kconfig"
+endif
+if ARCH_BOARD_MPS2_AN521
+source "boards/arm/mps/mps2-an521/Kconfig"
 endif
 if ARCH_BOARD_MPS3_AN547
 source "boards/arm/mps/mps3-an547/Kconfig"
@@ -4654,6 +4666,13 @@ config BOARD_COREDUMP_COMPRESSION
 	---help---
 		Enable LZF compression algorithm for core dump content
 
+config BOARD_COREDUMP_BASE64STREAM
+	bool "Enable base64 encoding for output stream"
+	default n
+	depends on BOARD_COREDUMP_SYSLOG
+	---help---
+		Enable based64 encoded stream instead of default hexstream.
+
 config BOARD_ENTROPY_POOL
 	bool "Enable Board level storing of entropy pool structure"
 	default n
@@ -4877,5 +4896,4 @@ config BOARD_MEMORY_RANGE
 		start: start address of memory range
 		end: end address of memory range
 		flags: Readable 0x1, writable 0x2, executable 0x4
-		example:0x1000,0x2000,0x1,0x2000,0x3000,0x3,0x3000,0x4000,0x7
-
+		example:0x1000,0x2000,0x1},{0x2000,0x3000,0x3},{0x3000,0x4000,0x7} ... {0x0,0x0,0x0}

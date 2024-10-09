@@ -1,6 +1,8 @@
 /****************************************************************************
  * include/nuttx/compiler.h
  *
+ * SPDX-License-Identifier: Apache-2.0
+ *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.  The
@@ -253,9 +255,20 @@
 
 #  define noinstrument_function __attribute__((no_instrument_function))
 
+/* The no_profile_instrument_function attribute on functions is used to
+ * inform the compiler that it should not process any profile feedback
+ * based optimization code instrumentation.
+ */
+
+#  define noprofile_function __attribute__((no_profile_instrument_function))
+
 /* The nooptimiziation_function attribute no optimize */
 
-#  define nooptimiziation_function __attribute__((optimize(0)))
+#  if defined(__clang__)
+#    define nooptimiziation_function __attribute__((optnone))
+#  else
+#    define nooptimiziation_function __attribute__((optimize("O0")))
+#  endif
 
 /* The nosanitize_address attribute informs GCC don't sanitize it */
 
@@ -297,6 +310,27 @@
 #      define nostackprotect_function __attribute__((__optimize__("-fno-stack-protector")))
 #    endif
 #  endif
+
+/* The constructor attribute causes the function to be called
+ * automatically before execution enters main ().
+ * Similarly, the destructor attribute causes the function to
+ * be called automatically after main () has completed or
+ * exit () has been called. Functions with these attributes are
+ * useful for initializing data that will be used implicitly
+ * during the execution of the program.
+ * See https://gcc.gnu.org/onlinedocs/gcc-4.1.2/gcc/Function-Attributes.html
+ */
+
+#  define constructor_fuction __attribute__((constructor))
+#  define destructor_function __attribute__((destructor))
+
+/* Use visibility_hidden to hide symbols by default
+ * Use visibility_default to make symbols visible
+ * See https://gcc.gnu.org/wiki/Visibility
+ */
+
+#  define visibility_hidden __attribute__((visibility("hidden")))
+#  define visibility_default __attribute__((visibility("default")))
 
 /* The unused code or data */
 
@@ -583,10 +617,16 @@
 #  define inline_function inline
 #  define noinline_function
 #  define noinstrument_function
+#  define noprofile_function
 #  define nooptimiziation_function
 #  define nosanitize_address
 #  define nosanitize_undefined
 #  define nostackprotect_function
+#  define constructor_fuction
+#  define destructor_function
+
+#  define visibility_hidden
+#  define visibility_default
 
 #  define unused_code
 #  define unused_data
@@ -729,10 +769,15 @@
 #  define inline_function inline
 #  define noinline_function
 #  define noinstrument_function
+#  define noprofile_function
 #  define nooptimiziation_function
 #  define nosanitize_address
 #  define nosanitize_undefined
 #  define nostackprotect_function
+#  define constructor_fuction
+#  define destructor_function
+#  define visibility_hidden
+#  define visibility_default
 #  define unused_code
 #  define unused_data
 #  define used_code
@@ -843,10 +888,15 @@
 #  define inline_function inline
 #  define noinline_function
 #  define noinstrument_function
+#  define noprofile_function
 #  define nooptimiziation_function
 #  define nosanitize_address
 #  define nosanitize_undefined
 #  define nostackprotect_function
+#  define constructor_fuction
+#  define destructor_function
+#  define visibility_hidden
+#  define visibility_default
 #  define unused_code
 #  define unused_data
 #  define used_code
@@ -936,10 +986,15 @@
 #  define inline_function __forceinline
 #  define noinline_function
 #  define noinstrument_function
+#  define noprofile_function
 #  define nooptimiziation_function
 #  define nosanitize_address
 #  define nosanitize_undefined
 #  define nostackprotect_function
+#  define constructor_fuction
+#  define destructor_function
+#  define visibility_hidden
+#  define visibility_default
 #  define unused_code
 #  define unused_data
 #  define used_code
@@ -1019,10 +1074,15 @@
 #  define inline_function               __attribute__((always_inline)) inline
 #  define noinline_function             __attribute__((noinline))
 #  define noinstrument_function
+#  define noprofile_function
 #  define nooptimiziation_function      __attribute__((optimize(0)))
 #  define nosanitize_address
 #  define nosanitize_undefined
 #  define nostackprotect_function
+#  define constructor_fuction
+#  define destructor_function
+#  define visibility_hidden
+#  define visibility_default
 #  define unused_code                   __attribute__((unused))
 #  define unused_data                   __attribute__((unused))
 #  define used_code                     __attribute__((used))
@@ -1087,10 +1147,15 @@
 #  define inline_function
 #  define noinline_function
 #  define noinstrument_function
+#  define noprofile_function
 #  define nooptimiziation_function
 #  define nosanitize_address
 #  define nosanitize_undefined
 #  define nostackprotect_function
+#  define constructor_fuction
+#  define destructor_function
+#  define visibility_hidden
+#  define visibility_default
 #  define unused_code
 #  define unused_data
 #  define used_code

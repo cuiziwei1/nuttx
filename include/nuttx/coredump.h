@@ -1,6 +1,8 @@
 /****************************************************************************
  * include/nuttx/coredump.h
  *
+ * SPDX-License-Identifier: Apache-2.0
+ *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.  The
@@ -40,7 +42,17 @@
  *
  ****************************************************************************/
 
-int coredump_set_memory_region(FAR struct memory_region_s *region);
+int coredump_set_memory_region(FAR const struct memory_region_s *region);
+
+/****************************************************************************
+ * Name: coredump_add_memory_region
+ *
+ * Description:
+ *   Use coredump to dump the memory of the specified area.
+ *
+ ****************************************************************************/
+
+int coredump_add_memory_region(FAR const void *ptr, size_t size);
 
 /****************************************************************************
  * Name: coredump_initialize

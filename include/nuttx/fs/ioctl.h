@@ -1,6 +1,8 @@
 /****************************************************************************
  * include/nuttx/fs/ioctl.h
  *
+ * SPDX-License-Identifier: Apache-2.0
+ *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.  The
@@ -225,6 +227,9 @@
                                            */
 #define FIOC_SETLKW         _FIOC(0x0014) /* IN:  Pointer to flock
                                            * OUT: None
+                                           */
+#define FIOC_XIPBASE        _FIOC(0x0015) /* IN:  uinptr_t *
+                                           * OUT: Current file xip base address
                                            */
 
 /* NuttX file system ioctl definitions **************************************/

@@ -225,13 +225,14 @@ int virtio_register_driver(FAR struct virtio_driver *driver)
       FAR struct virtio_device_item_s *item =
         container_of(node, struct virtio_device_item_s, node);
       FAR struct virtio_device *device = item->device;
-      if (driver->device == device->id.device)
+      if (item->driver == NULL && driver->device == device->id.device)
         {
           /* If found the device in the device list, call driver probe,
            * if probe success, assign item->driver to indicate the device
            * matched.
            */
 
+          device->priv = driver;
           if (driver->probe(device) >= 0)
             {
               item->driver = driver;
@@ -327,12 +328,12 @@ int virtio_register_device(FAR struct virtio_device *device)
            * matched.
            */
 
+          device->priv = driver;
           if (driver->probe(device) >= 0)
             {
               item->driver = driver;
+              break;
             }
-
-          break;
         }
     }
 
@@ -363,12 +364,12 @@ int virtio_unregister_device(FAR struct virtio_device *device)
         container_of(node, struct virtio_device_item_s, node);
       if (item->device == device)
         {
-          /* Call driver remove and mark item->driver NULL to indicate
-           * the device unmatched
-           */
+          /* Call driver remove */
 
-          item->driver->remove(device);
-          item->driver = NULL;
+          if (item->driver)
+            {
+              item->driver->remove(device);
+            }
 
           /* Remove the device from the device list and free memory */
 

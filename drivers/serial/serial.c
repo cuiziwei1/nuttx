@@ -294,13 +294,32 @@ static int uart_putxmitchar(FAR uart_dev_t *dev, int ch, bool oktoblock)
  * Name: uart_putc
  ****************************************************************************/
 
-static inline void uart_putc(FAR uart_dev_t *dev, int ch)
+static inline void uart_putchars(FAR uart_dev_t *dev,
+                                 FAR const void *buf, size_t len)
 {
-  while (!uart_txready(dev))
-    {
-    }
+  FAR const char *pbuf = buf;
 
-  uart_send(dev, ch);
+  while (len > 0)
+    {
+      while (!uart_txready(dev))
+        {
+        }
+
+      if (dev->ops->sendbuf)
+        {
+          ssize_t ret = uart_sendbuf(dev, pbuf, len);
+          if (ret > 0)
+            {
+              pbuf += ret;
+              len -= ret;
+            }
+        }
+      else
+        {
+          uart_send(dev, *pbuf++);
+          len--;
+        }
+    }
 }
 
 /****************************************************************************
@@ -311,39 +330,41 @@ static inline ssize_t uart_irqwrite(FAR uart_dev_t *dev,
                                     FAR const char *buffer,
                                     size_t buflen)
 {
-  ssize_t ret = buflen;
+  size_t tail = 0;
+  size_t head = buflen;
 
-  /* Force each character through the low level interface */
+  /* Do output post-processing */
 
-  for (; buflen; buflen--)
+  if ((dev->tc_oflag & OPOST) != 0)
     {
-      int ch = *buffer++;
-
-      /* Do output post-processing */
-
-      if ((dev->tc_oflag & OPOST) != 0)
+      for (head = 0; head < buflen; head++)
         {
+          int ch = buffer[head];
+
           /* Mapping CR to NL? */
 
           if ((ch == '\r') && (dev->tc_oflag & OCRNL) != 0)
             {
-              ch = '\n';
+              uart_putchars(dev, &buffer[tail], head - tail);
+              uart_putchars(dev, "\n", 1);
+              tail = head + 1;
             }
 
           /* Are we interested in newline processing? */
 
           if ((ch == '\n') && (dev->tc_oflag & (ONLCR | ONLRET)) != 0)
             {
-              uart_putc(dev, '\r');
+              uart_putchars(dev, &buffer[tail], head - tail);
+              uart_putchars(dev, "\r", 1);
+              tail = head;
             }
         }
-
-      /* Output the character, using the low-level direct UART interfaces */
-
-      uart_putc(dev, ch);
     }
 
-  return ret;
+  /* Output the character, using the low-level direct UART interfaces */
+
+  uart_putchars(dev, &buffer[tail], head - tail);
+  return buflen;
 }
 
 /****************************************************************************
@@ -1783,9 +1804,9 @@ static int uart_unlink(FAR struct inode *inode)
 static void uart_launch_foreach(FAR struct tcb_s *tcb, FAR void *arg)
 {
 #ifdef CONFIG_TTY_LAUNCH_ENTRY
-  if (!strcmp(tcb->name, CONFIG_TTY_LAUNCH_ENTRYNAME))
+  if (!strcmp(get_task_name(tcb), CONFIG_TTY_LAUNCH_ENTRYNAME))
 #else
-  if (!strcmp(tcb->name, CONFIG_TTY_LAUNCH_FILEPATH))
+  if (!strcmp(get_task_name(tcb), CONFIG_TTY_LAUNCH_FILEPATH))
 #endif
     {
       *(FAR int *)arg = 1;
@@ -1907,9 +1928,11 @@ int uart_register(FAR const char *path, FAR uart_dev_t *dev)
   /* Register the serial driver */
 
 #ifdef CONFIG_SERIAL_GDBSTUB
-  if (strcmp(path, CONFIG_SERIAL_GDBSTUB_PATH) == 0)
+  if (uart_gdbstub_register(dev, path) == 0)
     {
-      return uart_gdbstub_register(dev);
+      /* No need register the device if it is used by gdbstub */
+
+      return 0;
     }
 #endif
 
@@ -2081,7 +2104,7 @@ int uart_check_special(FAR uart_dev_t *dev, FAR const char *buf, size_t size)
 #ifdef CONFIG_TTY_FORCE_PANIC
       if (buf[i] == CONFIG_TTY_FORCE_PANIC_CHAR)
         {
-          PANIC();
+          PANIC_WITH_REGS("Force panic by user.", NULL);
           return 0;
         }
 #endif

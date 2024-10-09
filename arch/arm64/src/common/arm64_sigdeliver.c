@@ -38,10 +38,6 @@
 #include "irq/irq.h"
 #include "arm64_fatal.h"
 
-#ifdef CONFIG_ARCH_FPU
-#include "arm64_fpu.h"
-#endif
-
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -74,8 +70,8 @@ void arm64_sigdeliver(void)
 #endif
 
   sinfo("rtcb=%p sigdeliver=%p sigpendactionq.head=%p\n",
-        rtcb, rtcb->xcp.sigdeliver, rtcb->sigpendactionq.head);
-  DEBUGASSERT(rtcb->xcp.sigdeliver != NULL);
+        rtcb, rtcb->sigdeliver, rtcb->sigpendactionq.head);
+  DEBUGASSERT(rtcb->sigdeliver != NULL);
 
 retry:
 #ifdef CONFIG_SMP
@@ -107,7 +103,7 @@ retry:
 
   /* Deliver the signal */
 
-  ((sig_deliver_t)rtcb->xcp.sigdeliver)(rtcb);
+  (rtcb->sigdeliver)(rtcb);
 
   /* Output any debug messages BEFORE restoring errno (because they may
    * alter errno), then disable interrupts again and restore the original
@@ -154,13 +150,8 @@ retry:
    * could be modified by a hostile program.
    */
 
-  rtcb->xcp.sigdeliver = NULL;  /* Allows next handler to be scheduled */
+  rtcb->sigdeliver = NULL;  /* Allows next handler to be scheduled */
   rtcb->xcp.regs = rtcb->xcp.saved_reg;
-
-#ifdef CONFIG_ARCH_FPU
-  arm64_destory_fpu(rtcb);
-  rtcb->xcp.fpu_regs = rtcb->xcp.saved_fpu_regs;
-#endif
 
   /* Then restore the correct state for this thread of execution. */
 

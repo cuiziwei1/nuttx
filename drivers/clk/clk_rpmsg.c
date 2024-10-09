@@ -32,7 +32,7 @@
 #include <nuttx/clk/clk_provider.h>
 #include <nuttx/kmalloc.h>
 #include <nuttx/mutex.h>
-#include <nuttx/rptun/openamp.h>
+#include <nuttx/rpmsg/rpmsg.h>
 #include <nuttx/semaphore.h>
 
 /****************************************************************************
@@ -496,6 +496,10 @@ static int64_t clk_rpmsg_sendrecv(FAR struct rpmsg_endpoint *ept,
         {
           ret = cookie.result;
         }
+    }
+  else
+    {
+      rpmsg_release_tx_buffer(ept, msg);
     }
 
   nxsem_destroy(&cookie.sem);

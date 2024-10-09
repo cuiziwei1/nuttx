@@ -67,6 +67,8 @@ set(CMAKE_C_ARCHIVE_FINISH ${CMAKE_RANLIB_COMMAND})
 set(CMAKE_CXX_ARCHIVE_FINISH ${CMAKE_RANLIB_COMMAND})
 set(CMAKE_ASM_ARCHIVE_FINISH ${CMAKE_RANLIB_COMMAND})
 
+set(NO_LTO "-fno-lto")
+
 if(CONFIG_ARCH_ARMV8A)
   add_compile_options(-march=armv8-a)
 endif()
@@ -119,6 +121,18 @@ endif()
 
 if(CONFIG_MM_KASAN_ALL)
   add_compile_options(-fsanitize=kernel-address)
+endif()
+
+if(CONFIG_MM_KASAN_GLOBAL)
+  add_compile_options(--param=asan-globals=1)
+endif()
+
+if(CONFIG_MM_KASAN_DISABLE_READS_CHECK)
+  add_compile_options(--param=asan-instrument-reads=0)
+endif()
+
+if(CONFIG_MM_KASAN_DISABLE_WRITES_CHECK)
+  add_compile_options(--param=asan-instrument-writes=0)
 endif()
 
 if(CONFIG_ARCH_INSTRUMENT_ALL)
@@ -176,17 +190,5 @@ if(CONFIG_DEBUG_SYMBOLS)
 endif()
 
 if(CONFIG_ARCH_TOOLCHAIN_GNU)
-  if(NOT GCCVER)
-
-    execute_process(COMMAND ${CMAKE_C_COMPILER} --version
-                    OUTPUT_VARIABLE GCC_VERSION_INFO)
-
-    string(REGEX MATCH "[0-9]+\\.[0-9]+" GCC_VERSION ${GCC_VERSION_INFO})
-    string(REGEX REPLACE "\\..*" "" GCCVER ${GCC_VERSION})
-
-  endif()
-
-  if(GCCVER EQUAL 12)
-    add_link_options(-Wl,--no-warn-rwx-segments)
-  endif()
+  add_link_options(-Wl,--no-warn-rwx-segments)
 endif()

@@ -52,6 +52,10 @@ if(CONFIG_x86_64_UNWINDER_FRAME_POINTER)
   list(APPEND SRCS intel64_backtrace_fp.c)
 endif()
 
+if(CONFIG_STACK_COLORATION)
+  list(APPEND SRCS intel64_checkstack.c)
+endif()
+
 if(CONFIG_MM_PGALLOC)
   list(APPEND SRCS intel64_pgalloc.c)
 endif()
@@ -61,7 +65,7 @@ if(CONFIG_ARCH_HAVE_TESTSET)
 endif()
 
 if(CONFIG_SMP)
-  list(APPEND SRCS intel64_cpuidlestack.c intel64_cpupause.c intel64_cpustart.c)
+  list(APPEND SRCS intel64_cpuidlestack.c intel64_smpcall.c intel64_cpustart.c)
 endif()
 
 if(CONFIG_MULTBOOT2_FB_TERM)

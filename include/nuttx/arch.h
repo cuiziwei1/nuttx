@@ -1,6 +1,8 @@
 /****************************************************************************
  * include/nuttx/arch.h
  *
+ * SPDX-License-Identifier: Apache-2.0
+ *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.  The
@@ -101,7 +103,6 @@
  * Public Types
  ****************************************************************************/
 
-typedef CODE void (*sig_deliver_t)(FAR struct tcb_s *tcb);
 typedef CODE void (*phy_enable_t)(bool enable);
 typedef CODE void (*initializer_t)(void);
 typedef CODE void (*debug_callback_t)(int type, FAR void *addr, size_t size,
@@ -544,7 +545,7 @@ int up_backtrace(FAR struct tcb_s *tcb,
  *
  ****************************************************************************/
 
-void up_schedule_sigaction(FAR struct tcb_s *tcb, sig_deliver_t sigdeliver);
+void up_schedule_sigaction(FAR struct tcb_s *tcb);
 
 /****************************************************************************
  * Name: up_task_start
@@ -1747,18 +1748,6 @@ void up_secure_irq(int irq, bool secure);
 # define up_secure_irq(i, s)
 #endif
 
-#ifdef CONFIG_SMP
-/****************************************************************************
- * Name: up_send_smp_call
- *
- * Description:
- *   Send smp call to target cpu
- *
- ****************************************************************************/
-
-void up_send_smp_call(cpu_set_t cpuset);
-#endif
-
 /****************************************************************************
  * Name: up_secure_irq_all
  *
@@ -2291,36 +2280,9 @@ int up_cpu_idlestack(int cpu, FAR struct tcb_s *tcb, size_t stack_size);
 int up_cpu_start(int cpu);
 #endif
 
-/****************************************************************************
- * Name: up_cpu_pause
- *
- * Description:
- *   Save the state of the current task at the head of the
- *   g_assignedtasks[cpu] task list and then pause task execution on the
- *   CPU.
- *
- *   This function is called by the OS when the logic executing on one CPU
- *   needs to modify the state of the g_assignedtasks[cpu] list for another
- *   CPU.
- *
- * Input Parameters:
- *   cpu - The index of the CPU to be paused.
- *
- * Returned Value:
- *   Zero on success; a negated errno value on failure.
- *
- * Assumptions:
- *   Called from within a critical section; up_cpu_resume() must be called
- *   later while still within the same critical section.
- *
- ****************************************************************************/
-
 #ifdef CONFIG_SMP
-int up_cpu_pause(int cpu);
-#endif
-
 /****************************************************************************
- * Name: up_cpu_pause_async
+ * Name: up_send_smp_sched
  *
  * Description:
  *   pause task execution on the CPU
@@ -2338,128 +2300,17 @@ int up_cpu_pause(int cpu);
  *
  ****************************************************************************/
 
-#ifdef CONFIG_SMP
-int up_cpu_pause_async(int cpu);
-#endif
+int up_send_smp_sched(int cpu);
 
 /****************************************************************************
- * Name: up_cpu_pausereq
+ * Name: up_send_smp_call
  *
  * Description:
- *   Return true if a pause request is pending for this CPU.
- *
- * Input Parameters:
- *   cpu - The index of the CPU to be queried
- *
- * Returned Value:
- *   true   = a pause request is pending.
- *   false = no pasue request is pending.
+ *   Send smp call to target cpu
  *
  ****************************************************************************/
 
-#ifdef CONFIG_SMP
-bool up_cpu_pausereq(int cpu);
-#endif
-
-/****************************************************************************
- * Name: up_cpu_paused_save
- *
- * Description:
- *   Handle a pause request from another CPU.  Normally, this logic is
- *   executed from interrupt handling logic within the architecture-specific
- *   However, it is sometimes necessary to perform the pending
- *   pause operation in other contexts where the interrupt cannot be taken
- *   in order to avoid deadlocks.
- *
- * Input Parameters:
- *   None
- *
- * Returned Value:
- *   On success, OK is returned.  Otherwise, a negated errno value indicating
- *   the nature of the failure is returned.
- *
- ****************************************************************************/
-
-#ifdef CONFIG_SMP
-int up_cpu_paused_save(void);
-#endif
-
-/****************************************************************************
- * Name: up_cpu_paused
- *
- * Description:
- *   Handle a pause request from another CPU.  Normally, this logic is
- *   executed from interrupt handling logic within the architecture-specific
- *   However, it is sometimes necessary to perform the pending pause
- *   operation in other contexts where the interrupt cannot be taken
- *   in order to avoid deadlocks.
- *
- *   This function performs the following operations:
- *
- *   1. It saves the current task state at the head of the current assigned
- *      task list.
- *   2. It waits on a spinlock, then
- *   3. Returns from interrupt, restoring the state of the new task at the
- *      head of the ready to run list.
- *
- * Input Parameters:
- *   cpu - The index of the CPU to be paused
- *
- * Returned Value:
- *   On success, OK is returned.  Otherwise, a negated errno value indicating
- *   the nature of the failure is returned.
- *
- ****************************************************************************/
-
-#ifdef CONFIG_SMP
-int up_cpu_paused(int cpu);
-#endif
-
-/****************************************************************************
- * Name: up_cpu_paused_restore
- *
- * Description:
- *  Restore the state of the CPU after it was paused via up_cpu_pause(),
- *  and resume normal tasking.
- *
- * Input Parameters:
- *  None
- *
- * Returned Value:
- *   On success, OK is returned.  Otherwise, a negated errno value indicating
- *   the nature of the failure is returned.
- *
- ****************************************************************************/
-
-#ifdef CONFIG_SMP
-int up_cpu_paused_restore(void);
-#endif
-
-/****************************************************************************
- * Name: up_cpu_resume
- *
- * Description:
- *   Restart the cpu after it was paused via up_cpu_pause(), restoring the
- *   state of the task at the head of the g_assignedtasks[cpu] list, and
- *   resume normal tasking.
- *
- *   This function is called after up_cpu_pause in order to resume operation
- *   of the CPU after modifying its g_assignedtasks[cpu] list.
- *
- * Input Parameters:
- *   cpu - The index of the CPU being resumed.
- *
- * Returned Value:
- *   Zero on success; a negated errno value on failure.
- *
- * Assumptions:
- *   Called from within a critical section; up_cpu_pause() must have
- *   previously been called within the same critical section.
- *
- ****************************************************************************/
-
-#ifdef CONFIG_SMP
-int up_cpu_resume(int cpu);
+void up_send_smp_call(cpu_set_t cpuset);
 #endif
 
 /****************************************************************************
@@ -3084,7 +2935,8 @@ int up_debugpoint_remove(int type, FAR void *addr, size_t size);
  *  Allocate interrupts for MSI/MSI-X vector.
  *
  * Input Parameters:
- *   bus - Bus that PCI device resides
+ *   busno - Bus num that PCI device resides
+ *   devfn - Device and function number
  *   irq - allocated vectors array
  *   num - number of vectors to allocate
  *
@@ -3094,7 +2946,7 @@ int up_debugpoint_remove(int type, FAR void *addr, size_t size);
  *
  ****************************************************************************/
 
-int up_alloc_irq_msi(FAR int *num);
+int up_alloc_irq_msi(uint8_t busno, uint32_t devfn, FAR int *irq, int num);
 
 /****************************************************************************
  * Name: up_release_irq_msi
@@ -3121,7 +2973,6 @@ void up_release_irq_msi(FAR int *irq, int num);
  *  Connect interrupt for MSI/MSI-X.
  *
  * Input Parameters:
- *   bus - Bus that PCI device resides
  *   irq - vectors array
  *   num - number of vectors in array
  *   mar - returned value for Message Address Register
@@ -3132,7 +2983,7 @@ void up_release_irq_msi(FAR int *irq, int num);
  *
  ****************************************************************************/
 
-int up_connect_irq(FAR int *irq, int num,
+int up_connect_irq(FAR const int *irq, int num,
                    FAR uintptr_t *mar, FAR uint32_t *mdr);
 
 /****************************************************************************

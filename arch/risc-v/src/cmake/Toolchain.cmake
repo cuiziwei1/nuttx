@@ -107,6 +107,8 @@ elseif(CONFIG_LTO_FULL)
   endif()
 endif()
 
+set(NO_LTO "-fno-lto")
+
 # override the ARCHIVE command
 set(CMAKE_ARCHIVE_COMMAND "<CMAKE_AR> rcs <TARGET> <LINK_FLAGS> <OBJECTS>")
 set(CMAKE_RANLIB_COMMAND "<CMAKE_RANLIB> <TARGET>")
@@ -257,16 +259,7 @@ if(CONFIG_RISCV_TOOLCHAIN STREQUAL GNU_RVG)
   endif()
 
   if(CONFIG_ARCH_RV_ISA_ZICSR_ZIFENCEI)
-    if(NOT DEFINED GCCVER)
-      execute_process(COMMAND ${CMAKE_CXX_COMPILER} --version
-                      OUTPUT_VARIABLE GCC_VERSION_OUTPUT)
-      string(REGEX MATCH "\\+\\+.* ([0-9]+)\\.[0-9]+" GCC_VERSION_REGEX
-                   "${GCC_VERSION_OUTPUT}")
-      set(GCCVER ${CMAKE_MATCH_1})
-    endif()
-    if(GCCVER GREATER_EQUAL 12 OR CONFIG_ARCH_TOOLCHAIN_CLANG)
-      set(ARCHCPUEXTFLAGS ${ARCHCPUEXTFLAGS}_zicsr_zifencei)
-    endif()
+    set(ARCHCPUEXTFLAGS ${ARCHCPUEXTFLAGS}_zicsr_zifencei)
   endif()
 
   if(CONFIG_ARCH_RV_EXPERIMENTAL_EXTENSIONS)
@@ -352,11 +345,11 @@ if(CONFIG_MM_KASAN_ALL)
 endif()
 
 if(CONFIG_MM_KASAN_DISABLE_READS_CHECK)
-  add_compile_options(--param asan-instrument-reads=0)
+  add_compile_options(--param=asan-instrument-reads=0)
 endif()
 
 if(CONFIG_MM_KASAN_DISABLE_WRITES_CHECK)
-  add_compile_options(--param asan-instrument-writes=0)
+  add_compile_options(--param=asan-instrument-writes=0)
 endif()
 
 if(CONFIG_MM_UBSAN_ALL)

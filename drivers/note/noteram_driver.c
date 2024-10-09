@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include <nuttx/spinlock.h>
 #include <nuttx/sched.h>
@@ -419,6 +420,7 @@ static int noteram_open(FAR struct file *filep)
 int noteram_close(FAR struct file *filep)
 {
   FAR struct noteram_dump_context_s *ctx = filep->f_priv;
+
   kmm_free(ctx);
   return OK;
 }
@@ -621,11 +623,12 @@ static void noteram_dump_init_context(FAR struct noteram_dump_context_s *ctx)
 }
 
 /****************************************************************************
- * Name: get_task_name
+ * Name: get_taskname
  ****************************************************************************/
 
-static FAR const char *get_task_name(pid_t pid)
+static const char *get_taskname(pid_t pid)
 {
+#if CONFIG_DRIVERS_NOTE_TASKNAME_BUFSIZE > 0
   FAR const char *taskname;
 
   taskname = note_get_taskname(pid);
@@ -633,6 +636,7 @@ static FAR const char *get_task_name(pid_t pid)
     {
       return taskname;
     }
+#endif
 
   return "<noname>";
 }
@@ -658,7 +662,7 @@ static int noteram_dump_header(FAR struct lib_outstream_s *s,
 #endif
 
   ret = lib_sprintf(s, "%8s-%-3u [%d] %3" PRIu32 ".%09" PRIu32 ": ",
-                    get_task_name(pid), get_pid(pid), cpu, sec, nsec);
+                    get_taskname(pid), get_pid(pid), cpu, sec, nsec);
   return ret;
 }
 
@@ -694,9 +698,9 @@ static int noteram_dump_sched_switch(FAR struct lib_outstream_s *s,
   ret = lib_sprintf(s, "sched_switch: prev_comm=%s prev_pid=%u "
                     "prev_prio=%u prev_state=%c ==> "
                     "next_comm=%s next_pid=%u next_prio=%u\n",
-                    get_task_name(current_pid), get_pid(current_pid),
+                    get_taskname(current_pid), get_pid(current_pid),
                     current_priority, get_task_state(cctx->current_state),
-                    get_task_name(next_pid), get_pid(next_pid),
+                    get_taskname(next_pid), get_pid(next_pid),
                     next_priority);
 
   cctx->current_pid = cctx->next_pid;
@@ -740,7 +744,7 @@ static int noteram_dump_one(FAR uint8_t *p, FAR struct lib_outstream_s *s,
         ret += noteram_dump_header(s, note, ctx);
         ret += lib_sprintf(s, "sched_wakeup_new: comm=%s pid=%d "
                            "target_cpu=%d\n",
-                           get_task_name(pid), get_pid(pid), cpu);
+                           get_taskname(pid), get_pid(pid), cpu);
       }
       break;
 
@@ -794,7 +798,7 @@ static int noteram_dump_one(FAR uint8_t *p, FAR struct lib_outstream_s *s,
             ret += noteram_dump_header(s, note, ctx);
             ret += lib_sprintf(s, "sched_waking: comm=%s "
                                "pid=%d target_cpu=%d\n",
-                               get_task_name(cctx->next_pid),
+                               get_taskname(cctx->next_pid),
                                get_pid(cctx->next_pid), cpu);
             cctx->pendingswitch = true;
           }
@@ -893,6 +897,27 @@ static int noteram_dump_one(FAR uint8_t *p, FAR struct lib_outstream_s *s,
                 ret += noteram_dump_sched_switch(s, note, ctx);
               }
           }
+      }
+      break;
+#endif
+
+#ifdef CONFIG_SCHED_INSTRUMENTATION_WDOG
+    case NOTE_WDOG_START:
+    case NOTE_WDOG_CANCEL:
+    case NOTE_WDOG_ENTER:
+    case NOTE_WDOG_LEAVE:
+      {
+        FAR struct note_wdog_s *nw;
+        FAR const char *name[] =
+          {
+            "start", "cancel", "enter", "leave",
+          };
+
+        nw = (FAR struct note_wdog_s *)p;
+        ret += noteram_dump_header(s, note, ctx);
+        ret += lib_sprintf(s, "tracing_mark_write: I|%d|wdog: %s-%pS %p\n",
+                           pid, name[note->nc_type - NOTE_WDOG_START],
+                           (FAR void *)nw->handler, (FAR void *)nw->arg);
       }
       break;
 #endif
@@ -1015,7 +1040,27 @@ static int noteram_dump_one(FAR uint8_t *p, FAR struct lib_outstream_s *s,
       }
       break;
 #endif
+#ifdef CONFIG_SCHED_INSTRUMENTATION_HEAP
+    case NOTE_HEAP_ADD:
+    case NOTE_HEAP_REMOVE:
+    case NOTE_HEAP_ALLOC:
+    case NOTE_HEAP_FREE:
+      {
+        FAR struct note_heap_s *nmm = (FAR struct note_heap_s *)p;
+        FAR const char *name[] =
+          {
+            "add", "remove", "malloc", "free"
+          };
 
+        ret += noteram_dump_header(s, &nmm->nhp_cmn, ctx);
+        ret += lib_sprintf(s, "tracing_mark_write: C|%d|Heap Usage|%d|%s"
+                           ": heap: %p size:%" PRIiPTR ", address: %p\n",
+                           pid, nmm->used,
+                           name[note->nc_type - NOTE_HEAP_ADD],
+                           nmm->heap, nmm->size, nmm->mem);
+      }
+      break;
+#endif
     default:
       break;
     }

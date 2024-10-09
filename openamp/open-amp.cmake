@@ -92,12 +92,19 @@ if(CONFIG_OPENAMP_CACHE)
   set(WITH_DCACHE_VRINGS ON)
 endif()
 
-if(CONFIG_OPENAMP_RPMSG_DEBUG)
+if(CONFIG_OPENAMP_DEBUG)
   add_compile_definitions(RPMSG_DEBUG)
+  add_compile_definitions(VQUEUE_DEBUG)
 endif()
 
-if(CONFIG_OPENAMP_VQUEUE_DEBUG)
-  add_compile_definitions(VQUEUE_DEBUG)
+add_compile_definitions(elf_load=remoteproc_elf_load)
+
+if(CONFIG_OPENAMP_VIRTIO_DEVICE_ONLY)
+  add_compile_definitions(VIRTIO_DEVICE_ONLY)
+endif()
+
+if(CONFIG_OPENAMP_VIRTIO_DRIVER_ONLY)
+  add_compile_definitions(VIRTIO_DRIVER_ONLY)
 endif()
 
 set(WITH_LIBMETAL_FIND OFF)

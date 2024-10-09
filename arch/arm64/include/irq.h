@@ -243,12 +243,6 @@ extern "C"
 
 struct xcptcontext
 {
-  /* The following function pointer is non-zero if there are pending signals
-   * to be processed.
-   */
-
-  void *sigdeliver; /* Actual type is sig_deliver_t */
-
 #ifdef CONFIG_BUILD_KERNEL
   /* This is the saved address to use when returning from a user-space
    * signal handler.
@@ -267,11 +261,6 @@ struct xcptcontext
   /* task context, for signal process */
 
   uint64_t *saved_reg;
-
-#ifdef CONFIG_ARCH_FPU
-  uint64_t *fpu_regs;
-  uint64_t *saved_fpu_regs;
-#endif
 
   /* Extra fault address register saved for common paging logic.  In the
    * case of the pre-fetch abort, this value is the same as regs[REG_ELR];
@@ -445,6 +434,13 @@ static inline bool up_interrupt_context(void)
 {
   return up_current_regs() != NULL;
 }
+
+/****************************************************************************
+ * Name: up_getusrpc
+ ****************************************************************************/
+
+#define up_getusrpc(regs) \
+    (((uintptr_t *)((regs) ? (regs) : up_current_regs()))[REG_ELR])
 
 #undef EXTERN
 #ifdef __cplusplus

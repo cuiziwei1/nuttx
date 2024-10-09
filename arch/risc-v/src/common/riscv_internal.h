@@ -37,7 +37,6 @@
 
 #include <nuttx/irq.h>
 
-#include "riscv_sbi.h"
 #include "riscv_common_memorymap.h"
 
 /****************************************************************************
@@ -412,7 +411,7 @@ void riscv_stack_color(void *stackbase, size_t nbytes);
 
 #ifdef CONFIG_SMP
 void riscv_cpu_boot(int cpu);
-int riscv_pause_handler(int irq, void *c, void *arg);
+int riscv_smp_call_handler(int irq, void *c, void *arg);
 #endif
 
 /****************************************************************************
@@ -433,6 +432,10 @@ uintptr_t riscv_mhartid(void);
 #ifdef CONFIG_ARCH_USE_S_MODE
 void *riscv_perform_syscall(uintreg_t *regs);
 #endif
+
+void riscv_jump_to_user(uintptr_t entry, uintreg_t a0, uintreg_t a1,
+                        uintreg_t a2, uintreg_t sp,
+                        uintreg_t *regs) noreturn_function;
 
 /* Context switching via system calls ***************************************/
 

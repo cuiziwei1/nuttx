@@ -1,6 +1,8 @@
 # ##############################################################################
 # libs/libxx/libcxxabi.cmake
 #
+# SPDX-License-Identifier: Apache-2.0
+#
 # Licensed to the Apache Software Foundation (ASF) under one or more contributor
 # license agreements.  See the NOTICE file distributed with this work for
 # additional information regarding copyright ownership.  The ASF licenses this
@@ -106,6 +108,8 @@ if(CONFIG_ARCH_ARM)
   target_compile_definitions(libcxxabi
                              PRIVATE _URC_FATAL_PHASE1_ERROR=_URC_FAILURE)
 endif()
+
+target_compile_definitions(libcxxabi PRIVATE LIBCXXABI_NON_DEMANGLING_TERMINATE)
 
 target_sources(libcxxabi PRIVATE ${TARGET_SRCS})
 target_compile_options(libcxxabi PRIVATE -frtti)

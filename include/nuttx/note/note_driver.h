@@ -1,6 +1,8 @@
 /****************************************************************************
  * include/nuttx/note/note_driver.h
  *
+ * SPDX-License-Identifier: Apache-2.0
+ *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.  The
@@ -88,6 +90,15 @@ struct note_driver_ops_s
 #ifdef CONFIG_SCHED_INSTRUMENTATION_IRQHANDLER
   CODE void (*irqhandler)(FAR struct note_driver_s *drv, int irq,
                           FAR void *handler, bool enter);
+#endif
+#ifdef CONFIG_SCHED_INSTRUMENTATION_WDOG
+  CODE void (*wdog)(FAR struct note_driver_s *drv, uint8_t event,
+                    FAR void *handler, FAR const void *arg);
+#endif
+#ifdef CONFIG_SCHED_INSTRUMENTATION_HEAP
+  CODE void (*heap)(FAR struct note_driver_s *drv, uint8_t event,
+                    FAR void *heap, FAR void *mem, size_t size,
+                    size_t curused);
 #endif
 #ifdef CONFIG_SCHED_INSTRUMENTATION_DUMP
   CODE void (*string)(FAR struct note_driver_s *drv, uintptr_t ip,

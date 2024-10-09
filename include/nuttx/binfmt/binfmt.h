@@ -1,6 +1,8 @@
 /****************************************************************************
  * include/nuttx/binfmt/binfmt.h
  *
+ * SPDX-License-Identifier: Apache-2.0
+ *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.  The
@@ -139,7 +141,7 @@ struct binfmt_s
 
   /* Coredump callback */
 
-  CODE int (*coredump)(FAR struct memory_region_s *regions,
+  CODE int (*coredump)(FAR const struct memory_region_s *regions,
                        FAR struct lib_outstream_s *stream,
                        pid_t pid);
 };
@@ -220,7 +222,7 @@ int unregister_binfmt(FAR struct binfmt_s *binfmt);
  *
  ****************************************************************************/
 
-int core_dump(FAR struct memory_region_s *regions,
+int core_dump(FAR const struct memory_region_s *regions,
               FAR struct lib_outstream_s *stream,
               pid_t pid);
 

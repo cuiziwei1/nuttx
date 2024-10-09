@@ -178,12 +178,6 @@ struct xcpt_syscall_s
 
 struct xcptcontext
 {
-  /* The following function pointer is non-zero if there are pending signals
-   * to be processed.
-   */
-
-  void *sigdeliver; /* Actual type is sig_deliver_t */
-
   /* These are saved copies of registers used during signal processing.
    *
    * REVISIT:  Because there is only one copy of these save areas,
@@ -465,6 +459,13 @@ noinstrument_function static inline_function bool up_interrupt_context(void)
   return ret;
 }
 #endif
+
+/****************************************************************************
+ * Name: up_getusrpc
+ ****************************************************************************/
+
+#define up_getusrpc(regs) \
+    (((uint32_t *)((regs) ? (regs) : up_current_regs()))[REG_PC])
 
 #undef EXTERN
 #ifdef __cplusplus
